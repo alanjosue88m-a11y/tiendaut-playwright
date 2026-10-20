@@ -1,0 +1,30 @@
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+    - name: Install dependencies
+      run: npm ci
+    - name: Lint (análisis estático de las pruebas)
+      # se excluye el laboratorio de errores, que tiene un await olvidado a propósito (E7)
+      run: npx eslint tests/ --ignore-pattern "tests/errores-intencionales.spec.ts"
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+    - name: Run Playwright tests
+      run: npx playwright test --grep-invert "@laboratorio" --update-snapshots=missing --workers=1
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30

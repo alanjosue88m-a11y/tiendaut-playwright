@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Catálogo | TiendaUT</title></head>
+<body>
+  <main>
+    <h1>Catálogo</h1>
+
+    <p>
+      Carrito:
+      <span data-testid="contador-carrito">0</span> productos
+    </p>
+
+    <label for="buscar">Buscar producto</label>
+    <input
+      type="search"
+      placeholder="Buscar producto"
+      id="buscar"
+    >
+
+    <button id="vaciar">Vaciar carrito</button>
+
+    <ul id="lista">
+      <li>Cargando...</li>
+    </ul>
+  </main>
+
+  <script>
+    let carrito = 0;
+    const lista = document.getElementById('lista');
+    const contador = document.querySelector('[data-testid="contador-carrito"]');
+    let productos = [];
+
+    function pintar(filtro = '') {
+      lista.innerHTML = '';
+      productos
+        .filter(p => p.nombre.toLowerCase().includes(filtro.toLowerCase()))
+        .forEach(p => {
+          const li = document.createElement('li');
+          li.dataset.testid = 'producto';
+          li.innerHTML = `<h2>${p.nombre}</h2><span>$${p.precio}</span>
+                          <button>Agregar al carrito</button>`;
+          li.querySelector('button').addEventListener('click', () => {
+            carrito++;
+            contador.textContent = carrito;
+          });
+          lista.appendChild(li);
+        });
+    }
+
+   
+fetch('/api/productos')
+  .then(r => {
+    if (!r.ok) {
+      throw new Error('Error al cargar productos');
+    }
+    return r.json();
+  })
+  .then(data => {
+    productos = data;
+
+    const filtroActual = document.getElementById('buscar').value;
+    pintar(filtroActual);
+  })
+  .catch(error => {
+    console.error('Error al cargar productos:', error);
+    lista.innerHTML = '<li role="alert">No pudimos cargar los productos</li>';
+  });
+
+    document.getElementById('buscar').addEventListener('input', e => pintar(e.target.value));
+
+   document.getElementById('vaciar').addEventListener('click', () => {
+  carrito = 0;
+  contador.textContent = '0';
+});
+  </script>
+</body>
+</html>
